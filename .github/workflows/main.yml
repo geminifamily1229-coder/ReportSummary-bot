@@ -1,0 +1,50 @@
+name: WiseReport 10Min Monitor
+
+on:
+  schedule:
+    # 1. 한국시간 07:20 ~ 07:50 (10분 주기) -> UTC 전날 22:20 ~ 22:50
+    - cron: '20,30,40,50 22 * * 0-4'
+
+    # 2. 한국시간 08:00 ~ 08:50 (10분 주기) -> UTC 전날 23:00 ~ 23:50
+    - cron: '*/10 23 * * 0-4'
+
+    # 3. 한국시간 09:00 ~ 16:50 (10분 주기) -> UTC 당일 00:00 ~ 07:50
+    - cron: '*/10 0-7 * * 1-5'
+
+    # 4. 한국시간 17:00 정각 종료 확인 -> UTC 당일 08:00
+    - cron: '0 8 * * 1-5'
+
+  workflow_dispatch: # 수동 실행 버튼 활성화
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # 깃허브가 last_title.txt를 스스로 업데이트할 수 있는 권한
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install playwright requests
+        playwright install chromium
+        
+    - name: Run Scraper
+      env:
+        TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+        TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      run: python scraper.py
+      
+    - name: Commit & Push changes
+      run: |
+        git config --global user.name 'github-actions[bot]'
+        git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+        git add last_title.txt
+        git commit -m "Update last scraped title" || echo "No changes to commit"
+        git push
