@@ -50,16 +50,16 @@ def main():
                 company_raw = cols.nth(0).inner_text().strip()
                 company = company_raw.split('\n')[0].strip() if '\n' in company_raw else company_raw
                 
-                # [수정] 상향, 하향, 변동없음 로직 처리
                 trend_elem = cols.nth(3).locator("div[title]").first
                 trend_raw = trend_elem.get_attribute("title") if trend_elem.count() > 0 else ""
                 
+                # [수정됨] 2번 안: 직관적인 빨간색, 파란색 원 기호로 통일
                 if "상향" in trend_raw:
-                    trend = "🔺"
+                    trend = "🔴"
                 elif "하향" in trend_raw:
-                    trend = "🔻"
+                    trend = "🔵"
                 else:
-                    trend = "" # 변동없음 등은 아예 표시하지 않음
+                    trend = "" 
                 
                 price = cols.nth(3).locator(".content04").inner_text().strip()
                 title = cols.nth(5).inner_text().strip()
@@ -92,7 +92,6 @@ def main():
                 grouped[c] = []
             grouped[c].append(r)
             
-        # [수정] 정신사나운 이모티콘 모두 제거 및 포맷 깔끔하게 변경
         msg = "<b>[와이즈리포트 신규 업데이트]</b>\n\n"
         for comp, reports in grouped.items():
             count_str = f" ({len(reports)})" if len(reports) > 1 else ""
@@ -100,8 +99,6 @@ def main():
             
             for rep in reports:
                 msg += f" ├ {rep['title']}\n"
-                
-                # 트렌드(세모)가 있을 때만 띄어쓰기 후 기호 붙임
                 if rep['trend']:
                     msg += f" └ {rep['price']}원 {rep['trend']}\n"
                 else:
